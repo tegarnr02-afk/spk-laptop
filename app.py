@@ -33,32 +33,119 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------------------------
+# Tema terang / gelap
+# ---------------------------------------------------------------------------
+PALETTES = {
+    "light": {
+        "bg": "#F7F9FE", "glow1": "rgba(139,92,246,.10)", "glow2": "rgba(15,98,254,.10)",
+        "surface": "#FFFFFF", "surface2": "#F4F7FF", "input_bg": "#F4F7FF",
+        "border": "#E1E7F3", "text": "#1B1F27", "muted": "#5B6475", "faint": "#7A8396",
+        "accent": "#0F62FE", "accent2": "#8B5CF6", "soft": "#EEF3FF",
+        "hover_border": "#B9D0FF", "shadow": "rgba(20,40,90,.45)",
+        "shadow_hover": "rgba(15,98,254,.55)", "track": "#E7ECF8",
+        "rank": "rgba(15,98,254,.07)", "grid_filter": "none",
+        "scheme": "light",
+        # warna grafik
+        "chart_label": "#44506A", "chart_grid": "#EDF1FA", "chart_domain": "#D5DCEB",
+        "chart_range": ["#93C5FD", "#0F62FE"], "chart_solid": "#0F62FE",
+    },
+    "dark": {
+        "bg": "#0B1020", "glow1": "rgba(139,92,246,.20)", "glow2": "rgba(59,130,246,.16)",
+        "surface": "#141B2E", "surface2": "#1A2440", "input_bg": "#1A2440",
+        "border": "#27325A", "text": "#E8ECF6", "muted": "#A5B1CB", "faint": "#7F8CA8",
+        "accent": "#5B9BFF", "accent2": "#A78BFA", "soft": "rgba(91,155,255,.16)",
+        "hover_border": "#3C5BA8", "shadow": "rgba(0,0,0,.70)",
+        "shadow_hover": "rgba(91,155,255,.35)", "track": "#222C4A",
+        "rank": "rgba(91,155,255,.10)", "grid_filter": "invert(.92) hue-rotate(180deg)",
+        "scheme": "dark",
+        "chart_label": "#A5B1CB", "chart_grid": "#222C4A", "chart_domain": "#33406A",
+        "chart_range": ["#3B5FA8", "#7FB0FF"], "chart_solid": "#5B9BFF",
+    },
+}
+
+
+def _initial_theme():
+    """Tema awal: ikut parameter ?tema=gelap pada alamat, selain itu terang."""
+    try:
+        value = st.query_params.get("tema", "")
+        if isinstance(value, list):
+            value = value[0] if value else ""
+        return "dark" if str(value).lower() in ("gelap", "dark") else "light"
+    except Exception:
+        return "light"
+
+
+if "theme" not in st.session_state:
+    st.session_state["theme"] = _initial_theme()
+
+
+def toggle_theme():
+    new_theme = "dark" if st.session_state["theme"] == "light" else "light"
+    st.session_state["theme"] = new_theme
+    try:
+        st.query_params["tema"] = "gelap" if new_theme == "dark" else "terang"
+    except Exception:
+        pass
+
+
+IS_DARK = st.session_state["theme"] == "dark"
+P = PALETTES["dark" if IS_DARK else "light"]
+
+# ---------------------------------------------------------------------------
 # Gaya visual dan animasi
 # ---------------------------------------------------------------------------
-CUSTOM_CSS = """
+THEME_VARS = f"""
+<style>
+:root {{
+    --bg: {P['bg']}; --glow1: {P['glow1']}; --glow2: {P['glow2']};
+    --surface: {P['surface']}; --surface2: {P['surface2']}; --input-bg: {P['input_bg']};
+    --border: {P['border']}; --text: {P['text']}; --muted: {P['muted']}; --faint: {P['faint']};
+    --accent: {P['accent']}; --accent2: {P['accent2']}; --soft: {P['soft']};
+    --hover-border: {P['hover_border']}; --shadow: {P['shadow']};
+    --shadow-hover: {P['shadow_hover']}; --track: {P['track']}; --rank: {P['rank']};
+    --grid-filter: {P['grid_filter']};
+    color-scheme: {P['scheme']};
+}}
+</style>
+"""
+
+STATIC_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-html, body, .stApp, .stMarkdown, .stMarkdown p, h1, h2, h3, h4, label,
-input, textarea, button p, [data-baseweb="tab"] p,
-[data-testid="stMetricValue"], [data-testid="stMetricLabel"] p {
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
+/* ---------- Font ---------- */
+html, body, .stApp, .stApp div, .stApp p, .stApp label, .stApp li, .stApp button,
+.stApp input, .stApp textarea, .stApp h1, .stApp h2, .stApp h3, .stApp h4,
+.stApp span:not([data-testid="stIconMaterial"]) {
+    font-family: 'Plus Jakarta Sans', 'Source Sans', sans-serif;
 }
 
-/* ---------- Latar halaman ---------- */
+/* ---------- Latar dan warna teks ---------- */
 .stApp {
     background:
-        radial-gradient(900px 380px at 100% -5%, rgba(139,92,246,.10), transparent 60%),
-        radial-gradient(800px 360px at -5% 0%, rgba(15,98,254,.10), transparent 60%),
-        #F7F9FE;
-    color: #1B1F27;
+        radial-gradient(900px 380px at 100% -5%, var(--glow1), transparent 60%),
+        radial-gradient(800px 360px at -5% 0%, var(--glow2), transparent 60%),
+        var(--bg);
+    color: var(--text);
+    transition: background-color .4s ease, color .4s ease;
 }
-.block-container {padding-top: 1.6rem; max-width: 1200px;}
+.block-container {padding-top: 1.4rem; max-width: 1200px;}
 footer {visibility: hidden;}
 header[data-testid="stHeader"] {background: transparent;}
-section[data-testid="stSidebar"] {background: #F0F4FD;}
-.stApp h2, .stApp h3 {font-weight: 800; color: #1B1F27;}
-.stMarkdown, .stMarkdown p, label {color: #1B1F27;}
+.stApp, .stApp p, .stApp label, .stApp li, .stApp h1, .stApp h2, .stApp h3, .stApp h4,
+[data-testid="stWidgetLabel"] p, [data-testid="stMarkdownContainer"] p,
+[data-testid="stMetricValue"], [data-testid="stMetricValue"] div {color: var(--text);}
+.stApp h2, .stApp h3 {font-weight: 800;}
+[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p {color: var(--muted) !important;}
+.stApp a {color: var(--accent);}
+.stApp code {background: var(--surface2) !important; color: var(--accent) !important; border-radius: 6px;}
+section[data-testid="stSidebar"] {
+    background: var(--surface2) !important; border-right: 1px solid var(--border);
+}
+[data-testid="stExpandSidebarButton"] span, [data-testid="stSidebarCollapseButton"] span,
+[data-testid="stExpandSidebarButton"] svg, [data-testid="stSidebarCollapseButton"] svg {
+    color: var(--muted) !important;
+}
 
 /* ---------- Animasi ---------- */
 @keyframes fadeUp {
@@ -79,19 +166,43 @@ section[data-testid="stSidebar"] {background: #F0F4FD;}
     to   {width: var(--w);}
 }
 @keyframes pulseGlow {
-    0%, 100% {box-shadow: 0 0 0 0 rgba(15,98,254,.35);}
-    50%      {box-shadow: 0 0 0 8px rgba(15,98,254,0);}
+    0%, 100% {box-shadow: 0 0 0 0 rgba(91,155,255,.38);}
+    50%      {box-shadow: 0 0 0 8px rgba(91,155,255,0);}
 }
+
+/* ---------- Bilah atas dan tombol tema ---------- */
+.brand {
+    display: flex; align-items: center; gap: 10px; padding: 10px 0;
+    font-size: .95rem; font-weight: 700; letter-spacing: .02em; color: var(--text);
+}
+.brand-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    animation: pulseGlow 2.6s ease-in-out infinite;
+}
+.st-key-theme_toggle {display: flex; justify-content: flex-end;}
+.st-key-theme_toggle button {
+    border-radius: 999px !important; padding: .45rem 1.25rem !important;
+    background: var(--surface) !important; border: 1px solid var(--border) !important;
+    font-weight: 600 !important; box-shadow: 0 8px 18px -14px var(--shadow);
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease !important;
+}
+.st-key-theme_toggle button p, .st-key-theme_toggle button span {color: var(--text) !important;}
+.st-key-theme_toggle button:hover {
+    transform: translateY(-2px); border-color: var(--accent) !important;
+    box-shadow: 0 14px 22px -14px var(--shadow-hover);
+}
+.st-key-theme_toggle button [data-testid="stIconMaterial"] {color: var(--accent) !important;}
 
 /* ---------- Hero ---------- */
 .hero {
     position: relative; overflow: hidden;
-    border-radius: 24px; padding: 40px 42px; margin-bottom: 26px;
+    border-radius: 28px; padding: 40px 44px; margin-bottom: 26px;
     color: #fff;
     background: linear-gradient(120deg, #0B1F5C, #0F62FE, #6C3BFF, #0F62FE);
     background-size: 300% 300%;
     animation: fadeUp .7s ease both, gradientShift 14s ease infinite;
-    box-shadow: 0 22px 44px -22px rgba(15,98,254,.65);
+    box-shadow: 0 22px 44px -22px var(--shadow-hover);
 }
 .hero::before, .hero::after {
     content: ""; position: absolute; border-radius: 50%;
@@ -100,190 +211,253 @@ section[data-testid="stSidebar"] {background: #F0F4FD;}
 .hero::before {width: 280px; height: 280px; background: #7DD3FC; top: -100px; right: -60px;}
 .hero::after  {width: 230px; height: 230px; background: #C084FC; bottom: -110px; left: 35%; animation-delay: -4s;}
 .hero > * {position: relative; z-index: 1;}
-.hero-eyebrow {
+.hero .hero-eyebrow {
     display: inline-block; padding: 6px 14px; border-radius: 999px;
     font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
-    background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.3);
+    background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.3); color: #fff;
 }
-.hero-title {
+.hero .hero-title {
     font-size: 2.4rem; font-weight: 800; line-height: 1.15;
     margin: 16px 0 12px; max-width: 760px; color: #fff;
 }
-.hero-sub {max-width: 640px; font-size: 1.02rem; line-height: 1.65; opacity: .92; color: #fff;}
-.hero-chips {display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px;}
-.chip {
+.hero .hero-sub {max-width: 640px; font-size: 1.02rem; line-height: 1.65; opacity: .92; color: #fff;}
+.hero .hero-chips {display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px;}
+.hero .chip {
     padding: 7px 15px; border-radius: 999px; font-size: .82rem; font-weight: 600; color: #fff;
     background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.3);
     transition: transform .2s ease, background .2s ease;
 }
-.chip:hover {transform: translateY(-2px); background: rgba(255,255,255,.26);}
+.hero .chip:hover {transform: translateY(-2px); background: rgba(255,255,255,.26);}
 
 /* ---------- Judul seksi ---------- */
 .sec-title {
     display: flex; align-items: center; gap: 12px;
-    font-size: 1.2rem; font-weight: 800; color: #1B1F27;
+    font-size: 1.2rem; font-weight: 800; color: var(--text);
     margin: 28px 0 14px; animation: fadeUp .5s ease both;
 }
 .sec-title::before {
     content: ""; width: 5px; height: 24px; border-radius: 4px;
-    background: linear-gradient(180deg, #0F62FE, #8B5CF6);
+    background: linear-gradient(180deg, var(--accent), var(--accent2));
 }
-.section-note {color: #5B6475; font-size: .9rem; line-height: 1.6; margin: 8px 0 4px;}
+.section-note {color: var(--muted); font-size: .9rem; line-height: 1.6; margin: 8px 0 4px;}
 
-/* ---------- Tab ---------- */
-.stTabs [data-baseweb="tab-list"] {gap: 8px; border-bottom: none; flex-wrap: wrap;}
-.stTabs [data-baseweb="tab-highlight"], .stTabs [data-baseweb="tab-border"] {display: none;}
-.stTabs [data-baseweb="tab"] {
-    height: auto; padding: 9px 20px; border-radius: 999px;
-    background: #fff; border: 1px solid #E1E7F3;
-    transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+/* ---------- Tab oval ---------- */
+[data-testid="stTabs"] [role="tablist"] {
+    gap: 10px !important; border-bottom: none !important; box-shadow: none !important;
+    padding: 6px 4px 12px 4px !important; flex-wrap: wrap;
 }
-.stTabs [data-baseweb="tab"] p {color: #44506A; font-weight: 600; font-size: .9rem;}
-.stTabs [data-baseweb="tab"]:hover {transform: translateY(-2px); box-shadow: 0 8px 16px -10px rgba(15,98,254,.5);}
-.stTabs [aria-selected="true"] {
-    background: linear-gradient(90deg, #0F62FE, #8B5CF6) !important;
+[data-testid="stTabs"] [role="tablist"]::after,
+[data-testid="stTabs"] [role="tablist"]::before {display: none !important;}
+[data-testid="stTab"] {
+    height: auto !important; margin: 0 !important;
+    padding: 10px 24px !important; border-radius: 999px !important;
+    background: var(--surface) !important; border: 1px solid var(--border) !important;
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease !important;
+}
+[data-testid="stTab"] p {color: var(--muted) !important; font-weight: 600; font-size: .9rem;}
+[data-testid="stTab"]:hover {
+    transform: translateY(-2px); border-color: var(--accent) !important;
+    box-shadow: 0 10px 18px -12px var(--shadow-hover);
+}
+[data-testid="stTab"][aria-selected="true"] {
+    background: linear-gradient(90deg, var(--accent), var(--accent2)) !important;
     border-color: transparent !important;
-    box-shadow: 0 10px 20px -10px rgba(15,98,254,.7);
+    box-shadow: 0 12px 22px -10px var(--shadow-hover);
 }
-.stTabs [aria-selected="true"] p {color: #fff !important;}
-.stTabs [data-baseweb="tab-panel"] {animation: fadeUp .45s ease both; padding-top: .6rem;}
+[data-testid="stTab"][aria-selected="true"] p {color: #fff !important;}
+.react-aria-SelectionIndicator {display: none !important;}
+[data-testid="stTabs"] [role="tabpanel"] {animation: fadeUp .45s ease both; padding-top: .6rem;}
 
 /* ---------- Form anggaran ---------- */
 div[data-testid="stForm"] {
-    background: #fff; border: 1px solid #E1E7F3; border-radius: 20px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 24px;
     padding: 24px 24px 14px 24px;
-    box-shadow: 0 14px 30px -20px rgba(20,40,90,.4);
+    box-shadow: 0 14px 30px -20px var(--shadow);
     animation: fadeUp .6s ease both;
 }
-div[data-testid="stForm"] input {border-radius: 12px;}
+div[data-baseweb="input"], div[data-baseweb="base-input"], div[data-baseweb="select"] > div {
+    background: var(--input-bg) !important; border-color: var(--border) !important;
+    color: var(--text) !important; border-radius: 14px !important;
+}
+.stApp input, .stApp textarea {
+    color: var(--text) !important; -webkit-text-fill-color: var(--text);
+    background: transparent !important;
+}
+.stApp input::placeholder {color: var(--faint) !important; -webkit-text-fill-color: var(--faint);}
+[data-testid="stNumberInput"] button {
+    background: var(--input-bg) !important; color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+div[data-baseweb="select"] svg {color: var(--muted) !important; fill: var(--muted) !important;}
+div[data-baseweb="select"] span, div[data-baseweb="select"] div {color: var(--text);}
+div[data-baseweb="popover"] > div, div[data-baseweb="popover"] ul,
+div[data-baseweb="menu"], [data-testid="stSelectboxVirtualDropdown"] {
+    background: var(--surface) !important; color: var(--text) !important;
+    border: 1px solid var(--border); border-radius: 14px !important;
+}
+li[role="option"], li[role="option"] div {color: var(--text) !important;}
+li[role="option"]:hover, li[role="option"][aria-selected="true"] {background: var(--soft) !important;}
 div[data-testid="stFormSubmitButton"] button {
-    background: linear-gradient(90deg, #0F62FE, #8B5CF6, #0F62FE) !important;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent)) !important;
     background-size: 200% 100% !important;
-    color: #fff !important; border: none !important; border-radius: 12px !important;
-    padding: .6rem 1.6rem !important; font-weight: 700 !important;
+    color: #fff !important; border: none !important; border-radius: 999px !important;
+    padding: .6rem 1.8rem !important; font-weight: 700 !important;
     transition: transform .2s ease, box-shadow .2s ease, background-position .4s ease !important;
     animation: pulseGlow 2.6s ease-in-out infinite;
 }
 div[data-testid="stFormSubmitButton"] button:hover {
     transform: translateY(-2px);
     background-position: 100% 0 !important;
-    box-shadow: 0 14px 24px -10px rgba(15,98,254,.75);
+    box-shadow: 0 14px 24px -10px var(--shadow-hover);
 }
 div[data-testid="stFormSubmitButton"] button p {color: #fff !important; font-weight: 700;}
+[data-testid="stSlider"] [data-testid="stTickBarMin"], [data-testid="stSlider"] [data-testid="stTickBarMax"],
+[data-testid="stSlider"] [data-testid="stSliderThumbValue"] {color: var(--text) !important;}
+[data-testid="stFileUploaderDropzone"] {
+    background: var(--input-bg) !important; border: 1px dashed var(--border) !important;
+    border-radius: 16px !important;
+}
+[data-testid="stFileUploaderDropzone"] span, [data-testid="stFileUploaderDropzone"] small {color: var(--muted) !important;}
+[data-testid="stFileUploaderDropzone"] button {
+    background: var(--surface) !important; color: var(--text) !important;
+    border: 1px solid var(--border) !important; border-radius: 999px !important;
+}
 
 /* ---------- Kartu metrik ---------- */
 div[data-testid="stMetric"] {
-    background: #fff; border: 1px solid #E1E7F3; border-radius: 18px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
     padding: 16px 20px; animation: fadeUp .55s ease both;
-    box-shadow: 0 10px 22px -16px rgba(20,40,90,.4);
-    transition: transform .25s ease, box-shadow .25s ease;
+    box-shadow: 0 10px 22px -16px var(--shadow);
+    transition: transform .25s ease, box-shadow .25s ease, background .4s ease;
 }
 div[data-testid="stMetric"]:hover {
     transform: translateY(-4px);
-    box-shadow: 0 18px 28px -16px rgba(15,98,254,.45);
+    box-shadow: 0 18px 28px -16px var(--shadow-hover);
 }
 [data-testid="stMetricLabel"] p {
     font-size: .74rem !important; letter-spacing: .06em; text-transform: uppercase;
-    color: #6B7488 !important; font-weight: 700 !important;
+    color: var(--faint) !important; font-weight: 700 !important;
 }
-[data-testid="stMetricValue"] {font-weight: 800 !important; color: #1B1F27;}
+[data-testid="stMetricValue"] {font-weight: 800 !important;}
 
 /* ---------- Kartu rekomendasi ---------- */
 .rec-card {
     position: relative; overflow: hidden; min-height: 380px;
-    background: #fff; color: #1B1F27;
-    border: 1px solid #E1E7F3; border-radius: 22px;
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border); border-radius: 26px;
     padding: 24px 22px 20px 22px;
-    box-shadow: 0 12px 26px -18px rgba(20,40,90,.45);
+    box-shadow: 0 12px 26px -18px var(--shadow);
     animation: fadeUp .65s ease both;
     transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
 }
 .rec-card:hover {
     transform: translateY(-8px);
-    border-color: #B9D0FF;
-    box-shadow: 0 28px 40px -22px rgba(15,98,254,.55);
+    border-color: var(--hover-border);
+    box-shadow: 0 28px 40px -22px var(--shadow-hover);
 }
 .rec-card.top {
     border: 1.6px solid transparent;
     background:
-        linear-gradient(#fff, #fff) padding-box,
-        linear-gradient(135deg, #0F62FE, #8B5CF6) border-box;
+        linear-gradient(var(--surface), var(--surface)) padding-box,
+        linear-gradient(135deg, var(--accent), var(--accent2)) border-box;
 }
 .rec-rank {
     position: absolute; top: -8px; right: 16px;
     font-size: 5.6rem; font-weight: 800; line-height: 1;
-    color: rgba(15,98,254,.07); pointer-events: none;
+    color: var(--rank); pointer-events: none;
 }
 .rec-tag {
     display: inline-block; margin-bottom: 14px; padding: 5px 12px; border-radius: 999px;
     font-size: .66rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
-    background: #EEF3FF; color: #0F62FE;
+    background: var(--soft); color: var(--accent);
 }
-.rec-card.top .rec-tag {background: linear-gradient(90deg, #0F62FE, #8B5CF6); color: #fff;}
+.rec-card.top .rec-tag {background: linear-gradient(90deg, var(--accent), var(--accent2)); color: #fff;}
 .rec-model {
     font-size: 1rem; font-weight: 700; line-height: 1.4;
-    min-height: 2.8em; margin-bottom: 10px; color: #1B1F27;
+    min-height: 2.8em; margin-bottom: 10px; color: var(--text);
 }
 .rec-price {
     font-size: 1.6rem; font-weight: 800; margin-bottom: 4px;
-    background: linear-gradient(90deg, #0F62FE, #8B5CF6);
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
     -webkit-background-clip: text; background-clip: text; color: transparent;
     width: fit-content;
 }
-.rec-save {font-size: .78rem; color: #5B6475; margin-bottom: 18px;}
+.rec-save {font-size: .78rem; color: var(--muted); margin-bottom: 18px;}
 .rec-specs {display: grid; grid-template-columns: 1fr 1fr; gap: 10px;}
 .spec {
     display: flex; align-items: center; gap: 10px;
-    background: #F4F7FF; border-radius: 14px; padding: 10px 12px;
+    background: var(--surface2); border-radius: 16px; padding: 10px 12px;
     transition: background .2s ease, transform .2s ease;
 }
-.spec:hover {background: #E8EFFF; transform: scale(1.03);}
-.spec svg {width: 20px; height: 20px; flex: none; color: #0F62FE;}
+.spec:hover {background: var(--soft); transform: scale(1.03);}
+.spec svg {width: 20px; height: 20px; flex: none; color: var(--accent);}
 .spec small {
     display: block; font-size: .6rem; letter-spacing: .07em;
-    text-transform: uppercase; color: #7A8396; font-weight: 600;
+    text-transform: uppercase; color: var(--faint); font-weight: 600;
 }
-.spec b {font-size: .88rem; color: #1B1F27; font-weight: 700;}
+.spec b {font-size: .88rem; color: var(--text); font-weight: 700;}
 .score-row {
     display: flex; justify-content: space-between; align-items: baseline;
-    font-size: .8rem; color: #5B6475; margin: 18px 0 7px;
+    font-size: .8rem; color: var(--muted); margin: 18px 0 7px;
 }
-.score-row b {color: #1B1F27; font-size: .95rem; font-weight: 800;}
-.bar {height: 9px; background: #E7ECF8; border-radius: 999px; overflow: hidden;}
+.score-row b {color: var(--text); font-size: .95rem; font-weight: 800;}
+.bar {height: 9px; background: var(--track); border-radius: 999px; overflow: hidden;}
 .bar > i {
     display: block; height: 100%; width: var(--w); border-radius: 999px;
-    background: linear-gradient(90deg, #60A5FA, #0F62FE, #8B5CF6);
+    background: linear-gradient(90deg, #60A5FA, var(--accent), var(--accent2));
     animation: grow 1.2s cubic-bezier(.2,.8,.2,1) both; animation-delay: .35s;
 }
+
+/* ---------- Pemberitahuan ---------- */
+.notice {
+    display: flex; gap: 14px; align-items: stretch;
+    padding: 14px 18px; margin: 10px 0; border-radius: 18px;
+    background: var(--n-bg); border: 1px solid var(--n-border);
+    color: var(--text); line-height: 1.55; font-size: .95rem;
+    animation: fadeUp .5s ease both;
+}
+.notice::before {
+    content: ""; flex: none; width: 5px; border-radius: 4px; background: var(--n-color);
+}
+.notice div {color: var(--text);}
+.notice.success {--n-color: #16A34A; --n-bg: rgba(22,163,74,.10); --n-border: rgba(22,163,74,.32);}
+.notice.error   {--n-color: #DC2626; --n-bg: rgba(220,38,38,.10); --n-border: rgba(220,38,38,.32);}
+.notice.warning {--n-color: #D97706; --n-bg: rgba(217,119,6,.11); --n-border: rgba(217,119,6,.34);}
+.notice.info    {--n-color: var(--accent); --n-bg: var(--soft); --n-border: var(--hover-border);}
 
 /* ---------- Keadaan kosong ---------- */
 .empty {
     text-align: center; padding: 44px 24px; margin-top: 12px;
-    border: 1.6px dashed #BFD0F5; border-radius: 20px; background: #fff;
-    color: #44506A; line-height: 1.6; animation: fadeUp .5s ease both;
+    border: 1.6px dashed var(--hover-border); border-radius: 24px; background: var(--surface);
+    color: var(--muted); line-height: 1.6; animation: fadeUp .5s ease both;
 }
-.empty b {display: block; font-size: 1.15rem; margin-bottom: 6px; color: #1B1F27;}
+.empty b {display: block; font-size: 1.15rem; margin-bottom: 6px; color: var(--text);}
 
 /* ---------- Komponen lain ---------- */
 div[data-testid="stDataFrame"], div[data-testid="stDataEditor"] {
-    border: 1px solid #E1E7F3; border-radius: 16px; overflow: hidden;
-    box-shadow: 0 10px 22px -18px rgba(20,40,90,.4);
+    border: 1px solid var(--border); border-radius: 20px; overflow: hidden;
+    box-shadow: 0 10px 22px -18px var(--shadow);
+    filter: var(--grid-filter);
 }
 div[data-testid="stExpander"] {
-    border: 1px solid #E1E7F3 !important; border-radius: 16px !important; background: #fff;
+    border: 1px solid var(--border) !important; border-radius: 20px !important;
+    background: var(--surface) !important;
 }
-div[data-testid="stAlert"] {border-radius: 14px;}
+div[data-testid="stExpander"] details, div[data-testid="stExpander"] summary {background: transparent !important;}
+div[data-testid="stExpander"] summary p, div[data-testid="stExpander"] summary span {color: var(--text) !important;}
 .stDownloadButton button {
-    border-radius: 12px; border: 1px solid #CFE0FF; background: #fff; font-weight: 600;
+    border-radius: 999px; border: 1px solid var(--border); background: var(--surface);
+    font-weight: 600;
     transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
 }
+.stDownloadButton button p {color: var(--text) !important;}
 .stDownloadButton button:hover {
-    transform: translateY(-2px); border-color: #0F62FE;
-    box-shadow: 0 12px 20px -12px rgba(15,98,254,.6);
+    transform: translateY(-2px); border-color: var(--accent);
+    box-shadow: 0 12px 20px -12px var(--shadow-hover);
 }
 .footer-note {
-    margin-top: 34px; padding-top: 16px; border-top: 1px solid #E1E7F3;
-    font-size: .8rem; color: #7A8396; text-align: center;
+    margin-top: 34px; padding-top: 16px; border-top: 1px solid var(--border);
+    font-size: .8rem; color: var(--faint); text-align: center;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -292,7 +466,28 @@ div[data-testid="stAlert"] {border-radius: 14px;}
 }
 </style>
 """
-st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+st.markdown(THEME_VARS + STATIC_CSS, unsafe_allow_html=True)
+
+# ---------------------------------------------------------------------------
+# Bilah atas (nama aplikasi dan tombol tema)
+# ---------------------------------------------------------------------------
+try:
+    top_left, top_right = st.columns([4, 1], vertical_alignment="center")
+except TypeError:
+    top_left, top_right = st.columns([4, 1])
+
+with top_left:
+    st.markdown(
+        '<div class="brand"><span class="brand-dot"></span>SPK Laptop Pemrograman</div>',
+        unsafe_allow_html=True,
+    )
+with top_right:
+    theme_label = "Mode terang" if IS_DARK else "Mode gelap"
+    theme_icon = ":material/light_mode:" if IS_DARK else ":material/dark_mode:"
+    try:
+        st.button(theme_label, key="theme_toggle", on_click=toggle_theme, icon=theme_icon)
+    except TypeError:
+        st.button(theme_label, key="theme_toggle", on_click=toggle_theme)
 
 # ---------------------------------------------------------------------------
 # Hero
@@ -356,7 +551,7 @@ ICON_SCREEN = (SVG_OPEN + '<rect x="3" y="4" width="18" height="12" rx="2"/>'
 
 
 # ---------------------------------------------------------------------------
-# Pembantu kompatibilitas versi Streamlit (lebar penuh)
+# Pembantu tampilan
 # ---------------------------------------------------------------------------
 def stretch(func, *args, **kwargs):
     """Memanggil komponen Streamlit dengan lebar penuh.
@@ -367,6 +562,14 @@ def stretch(func, *args, **kwargs):
         return func(*args, width="stretch", **kwargs)
     except Exception:
         return func(*args, use_container_width=True, **kwargs)
+
+
+def notice(kind, text):
+    """Kotak pemberitahuan yang ikut tema. kind: success, error, warning, info."""
+    st.markdown(
+        f'<div class="notice {kind}"><div>{html.escape(str(text))}</div></div>',
+        unsafe_allow_html=True,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -534,7 +737,7 @@ def calculate_topsis(data, criteria, weights, criteria_types):
 
 
 # ---------------------------------------------------------------------------
-# Utilitas tampilan
+# Utilitas tampilan data
 # ---------------------------------------------------------------------------
 def format_rupiah(value):
     return "Rp." + f"{int(round(value)):,}".replace(",", ".")
@@ -653,8 +856,9 @@ def style_chart(chart):
     return (
         chart.configure_view(stroke=None)
         .configure_axis(
-            gridColor="#EDF1FA", domainColor="#D5DCEB", tickColor="#D5DCEB",
-            labelColor="#44506A", titleColor="#44506A", labelFontSize=12,
+            gridColor=P["chart_grid"], domainColor=P["chart_domain"],
+            tickColor=P["chart_domain"], labelColor=P["chart_label"],
+            titleColor=P["chart_label"], labelFontSize=12,
         )
         .configure(background="transparent")
     )
@@ -672,7 +876,7 @@ def score_chart(data, top_n):
                     axis=alt.Axis(labelLimit=340)),
             color=alt.Color(
                 "preference_score:Q",
-                scale=alt.Scale(range=["#93C5FD", "#0F62FE"]),
+                scale=alt.Scale(range=P["chart_range"]),
                 legend=None,
             ),
             tooltip=[
@@ -723,29 +927,30 @@ if source_mode == "Unduh dari Kaggle":
     try:
         df_raw, source_sha256, source_name = load_from_kaggle()
     except Exception as exc:
-        st.error(
+        notice(
+            "error",
             "Gagal mengunduh dataset dari Kaggle. Buka sidebar (panah di kiri atas) "
-            "lalu pilih opsi Unggah laptop.csv."
+            "lalu pilih opsi Unggah laptop.csv.",
         )
         st.exception(exc)
         st.stop()
 else:
     if uploaded is None:
-        st.info("Buka sidebar (panah di kiri atas) dan unggah file laptop.csv untuk memulai.")
+        notice("info", "Buka sidebar (panah di kiri atas) dan unggah file laptop.csv untuk memulai.")
         st.stop()
     df_raw, source_sha256, source_name = load_from_upload(uploaded.getvalue(), uploaded.name)
 
 required_columns = ["Model", "Price", "Core", "Ram", "SSD", "Display"]
 missing_columns = [c for c in required_columns if c not in df_raw.columns]
 if missing_columns:
-    st.error(f"Kolom wajib tidak ditemukan: {missing_columns}")
+    notice("error", f"Kolom wajib tidak ditemukan: {missing_columns}")
     st.stop()
 
 if INR_TO_IDR_RATE <= 0:
-    st.error("Kurs INR ke IDR harus berupa angka positif.")
+    notice("error", "Kurs INR ke IDR harus berupa angka positif.")
     st.stop()
 if not EXCHANGE_RATE_SOURCE.strip() or not EXCHANGE_RATE_DATE.strip():
-    st.error("Sumber dan tanggal kurs wajib diisi.")
+    notice("error", "Sumber dan tanggal kurs wajib diisi.")
     st.stop()
 
 # ---------------------------------------------------------------------------
@@ -762,9 +967,10 @@ df_excluded = df_extracted.loc[~valid_mask].copy()
 df_clean_inr = df_extracted.loc[valid_mask].copy().reset_index(drop=True)
 
 if len(df_clean_inr) < 45:
-    st.error(
+    notice(
+        "error",
         f"Alternatif valid hanya {len(df_clean_inr)} (kurang dari 45). "
-        "Periksa aturan ekstraksi sebelum melanjutkan."
+        "Periksa aturan ekstraksi sebelum melanjutkan.",
     )
     st.stop()
 
@@ -822,9 +1028,10 @@ with tab_ahp:
                 pairwise_matrix[j, i] = 1.0 / v
 
     if not valid_matrix:
-        st.error(
+        notice(
+            "error",
             "Semua sel di atas diagonal harus berisi angka positif. "
-            "Sementara ini perhitungan memakai matriks bawaan."
+            "Sementara ini perhitungan memakai matriks bawaan.",
         )
         pairwise_matrix = DEFAULT_PAIRWISE.copy()
 
@@ -853,7 +1060,7 @@ with tab_ahp:
     with w2:
         weight_chart = (
             alt.Chart(weight_table)
-            .mark_bar(cornerRadiusEnd=7, size=20, color="#0F62FE")
+            .mark_bar(cornerRadiusEnd=7, size=20, color=P["chart_solid"])
             .encode(
                 x=alt.X("Bobot:Q", title="Bobot AHP"),
                 y=alt.Y("Kriteria:N", sort="-x", title=None),
@@ -870,9 +1077,9 @@ with tab_ahp:
     k3.metric("RI", f"{RI:.2f}")
     k4.metric("CR", f"{CR:.6f}")
     if CR < 0.10:
-        st.success("Konsisten (CR < 0,10)")
+        notice("success", "Konsisten (CR < 0,10)")
     else:
-        st.error("Belum konsisten (CR >= 0,10). Perbaiki penilaian matriks.")
+        notice("error", "Belum konsisten (CR >= 0,10). Perbaiki penilaian matriks.")
 
 # ======================= TOPSIS =======================
 ranking = calculate_topsis(df_clean, criteria, weights, criteria_types)
@@ -896,9 +1103,10 @@ with tab_rec:
     budget = parse_budget(budget_text)
 
     if budget is None:
-        st.error(
+        notice(
+            "error",
             "Anggaran tidak dapat dibaca. Gunakan angka, misalnya 10.000.000, "
-            "10jt, atau 7,5 juta."
+            "10jt, atau 7,5 juta.",
         )
     else:
         budget_result = ranking[ranking["price_idr"] <= budget].copy().reset_index(drop=True)
@@ -964,11 +1172,12 @@ with tab_rank:
 # ======================= TAB DATA =======================
 with tab_data:
     with st.expander("Catatan akademik"):
-        st.warning(
+        notice(
+            "warning",
             "Instruksi Final Project menyebutkan alternatif minimal 45 data dummy. "
             "Dataset ini adalah data sekunder Kaggle, bukan data dummy. Penggunaannya "
             "perlu dikonfirmasi kepada dosen. Jangan menyebut dataset ini sebagai "
-            "data dummy sebelum ada persetujuan atau arahan dosen."
+            "data dummy sebelum ada persetujuan atau arahan dosen.",
         )
 
     st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
