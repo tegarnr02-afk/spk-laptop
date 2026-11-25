@@ -32,44 +32,278 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-st.markdown(
-    """
+# ---------------------------------------------------------------------------
+# Gaya visual dan animasi
+# ---------------------------------------------------------------------------
+CUSTOM_CSS = """
 <style>
-.block-container {padding-top: 2.4rem; max-width: 1180px;}
-h1 {font-weight: 700; letter-spacing: -0.01em;}
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+html, body, .stApp, .stMarkdown, .stMarkdown p, h1, h2, h3, h4, label,
+input, textarea, button p, [data-baseweb="tab"] p,
+[data-testid="stMetricValue"], [data-testid="stMetricLabel"] p {
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* ---------- Latar halaman ---------- */
+.stApp {
+    background:
+        radial-gradient(900px 380px at 100% -5%, rgba(139,92,246,.10), transparent 60%),
+        radial-gradient(800px 360px at -5% 0%, rgba(15,98,254,.10), transparent 60%),
+        #F7F9FE;
+    color: #1B1F27;
+}
+.block-container {padding-top: 1.6rem; max-width: 1200px;}
+footer {visibility: hidden;}
+header[data-testid="stHeader"] {background: transparent;}
+section[data-testid="stSidebar"] {background: #F0F4FD;}
+.stApp h2, .stApp h3 {font-weight: 800; color: #1B1F27;}
+.stMarkdown, .stMarkdown p, label {color: #1B1F27;}
+
+/* ---------- Animasi ---------- */
+@keyframes fadeUp {
+    from {opacity: 0; transform: translateY(18px);}
+    to   {opacity: 1; transform: none;}
+}
+@keyframes gradientShift {
+    0%   {background-position: 0% 50%;}
+    50%  {background-position: 100% 50%;}
+    100% {background-position: 0% 50%;}
+}
+@keyframes floaty {
+    0%, 100% {transform: translate(0, 0);}
+    50%      {transform: translate(-18px, 22px);}
+}
+@keyframes grow {
+    from {width: 0;}
+    to   {width: var(--w);}
+}
+@keyframes pulseGlow {
+    0%, 100% {box-shadow: 0 0 0 0 rgba(15,98,254,.35);}
+    50%      {box-shadow: 0 0 0 8px rgba(15,98,254,0);}
+}
+
+/* ---------- Hero ---------- */
+.hero {
+    position: relative; overflow: hidden;
+    border-radius: 24px; padding: 40px 42px; margin-bottom: 26px;
+    color: #fff;
+    background: linear-gradient(120deg, #0B1F5C, #0F62FE, #6C3BFF, #0F62FE);
+    background-size: 300% 300%;
+    animation: fadeUp .7s ease both, gradientShift 14s ease infinite;
+    box-shadow: 0 22px 44px -22px rgba(15,98,254,.65);
+}
+.hero::before, .hero::after {
+    content: ""; position: absolute; border-radius: 50%;
+    filter: blur(42px); opacity: .5; animation: floaty 9s ease-in-out infinite;
+}
+.hero::before {width: 280px; height: 280px; background: #7DD3FC; top: -100px; right: -60px;}
+.hero::after  {width: 230px; height: 230px; background: #C084FC; bottom: -110px; left: 35%; animation-delay: -4s;}
+.hero > * {position: relative; z-index: 1;}
+.hero-eyebrow {
+    display: inline-block; padding: 6px 14px; border-radius: 999px;
+    font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.3);
+}
+.hero-title {
+    font-size: 2.4rem; font-weight: 800; line-height: 1.15;
+    margin: 16px 0 12px; max-width: 760px; color: #fff;
+}
+.hero-sub {max-width: 640px; font-size: 1.02rem; line-height: 1.65; opacity: .92; color: #fff;}
+.hero-chips {display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px;}
+.chip {
+    padding: 7px 15px; border-radius: 999px; font-size: .82rem; font-weight: 600; color: #fff;
+    background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.3);
+    transition: transform .2s ease, background .2s ease;
+}
+.chip:hover {transform: translateY(-2px); background: rgba(255,255,255,.26);}
+
+/* ---------- Judul seksi ---------- */
+.sec-title {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 1.2rem; font-weight: 800; color: #1B1F27;
+    margin: 28px 0 14px; animation: fadeUp .5s ease both;
+}
+.sec-title::before {
+    content: ""; width: 5px; height: 24px; border-radius: 4px;
+    background: linear-gradient(180deg, #0F62FE, #8B5CF6);
+}
+.section-note {color: #5B6475; font-size: .9rem; line-height: 1.6; margin: 8px 0 4px;}
+
+/* ---------- Tab ---------- */
+.stTabs [data-baseweb="tab-list"] {gap: 8px; border-bottom: none; flex-wrap: wrap;}
+.stTabs [data-baseweb="tab-highlight"], .stTabs [data-baseweb="tab-border"] {display: none;}
+.stTabs [data-baseweb="tab"] {
+    height: auto; padding: 9px 20px; border-radius: 999px;
+    background: #fff; border: 1px solid #E1E7F3;
+    transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+}
+.stTabs [data-baseweb="tab"] p {color: #44506A; font-weight: 600; font-size: .9rem;}
+.stTabs [data-baseweb="tab"]:hover {transform: translateY(-2px); box-shadow: 0 8px 16px -10px rgba(15,98,254,.5);}
+.stTabs [aria-selected="true"] {
+    background: linear-gradient(90deg, #0F62FE, #8B5CF6) !important;
+    border-color: transparent !important;
+    box-shadow: 0 10px 20px -10px rgba(15,98,254,.7);
+}
+.stTabs [aria-selected="true"] p {color: #fff !important;}
+.stTabs [data-baseweb="tab-panel"] {animation: fadeUp .45s ease both; padding-top: .6rem;}
+
+/* ---------- Form anggaran ---------- */
+div[data-testid="stForm"] {
+    background: #fff; border: 1px solid #E1E7F3; border-radius: 20px;
+    padding: 24px 24px 14px 24px;
+    box-shadow: 0 14px 30px -20px rgba(20,40,90,.4);
+    animation: fadeUp .6s ease both;
+}
+div[data-testid="stForm"] input {border-radius: 12px;}
+div[data-testid="stFormSubmitButton"] button {
+    background: linear-gradient(90deg, #0F62FE, #8B5CF6, #0F62FE) !important;
+    background-size: 200% 100% !important;
+    color: #fff !important; border: none !important; border-radius: 12px !important;
+    padding: .6rem 1.6rem !important; font-weight: 700 !important;
+    transition: transform .2s ease, box-shadow .2s ease, background-position .4s ease !important;
+    animation: pulseGlow 2.6s ease-in-out infinite;
+}
+div[data-testid="stFormSubmitButton"] button:hover {
+    transform: translateY(-2px);
+    background-position: 100% 0 !important;
+    box-shadow: 0 14px 24px -10px rgba(15,98,254,.75);
+}
+div[data-testid="stFormSubmitButton"] button p {color: #fff !important; font-weight: 700;}
+
+/* ---------- Kartu metrik ---------- */
+div[data-testid="stMetric"] {
+    background: #fff; border: 1px solid #E1E7F3; border-radius: 18px;
+    padding: 16px 20px; animation: fadeUp .55s ease both;
+    box-shadow: 0 10px 22px -16px rgba(20,40,90,.4);
+    transition: transform .25s ease, box-shadow .25s ease;
+}
+div[data-testid="stMetric"]:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 28px -16px rgba(15,98,254,.45);
+}
+[data-testid="stMetricLabel"] p {
+    font-size: .74rem !important; letter-spacing: .06em; text-transform: uppercase;
+    color: #6B7488 !important; font-weight: 700 !important;
+}
+[data-testid="stMetricValue"] {font-weight: 800 !important; color: #1B1F27;}
+
+/* ---------- Kartu rekomendasi ---------- */
 .rec-card {
-    border: 1px solid rgba(128,128,128,.28);
-    border-radius: 12px;
-    padding: 18px 18px 14px 18px;
-    background: var(--secondary-background-color, #f6f8fa);
-    min-height: 300px;
+    position: relative; overflow: hidden; min-height: 380px;
+    background: #fff; color: #1B1F27;
+    border: 1px solid #E1E7F3; border-radius: 22px;
+    padding: 24px 22px 20px 22px;
+    box-shadow: 0 12px 26px -18px rgba(20,40,90,.45);
+    animation: fadeUp .65s ease both;
+    transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
 }
-.rec-card.top {border: 1.5px solid var(--primary-color, #0F62FE);}
+.rec-card:hover {
+    transform: translateY(-8px);
+    border-color: #B9D0FF;
+    box-shadow: 0 28px 40px -22px rgba(15,98,254,.55);
+}
+.rec-card.top {
+    border: 1.6px solid transparent;
+    background:
+        linear-gradient(#fff, #fff) padding-box,
+        linear-gradient(135deg, #0F62FE, #8B5CF6) border-box;
+}
+.rec-rank {
+    position: absolute; top: -8px; right: 16px;
+    font-size: 5.6rem; font-weight: 800; line-height: 1;
+    color: rgba(15,98,254,.07); pointer-events: none;
+}
 .rec-tag {
-    font-size: .72rem; letter-spacing: .06em; text-transform: uppercase;
-    opacity: .7; margin-bottom: 6px;
+    display: inline-block; margin-bottom: 14px; padding: 5px 12px; border-radius: 999px;
+    font-size: .66rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+    background: #EEF3FF; color: #0F62FE;
 }
+.rec-card.top .rec-tag {background: linear-gradient(90deg, #0F62FE, #8B5CF6); color: #fff;}
 .rec-model {
-    font-size: 1.02rem; font-weight: 600; line-height: 1.35;
-    min-height: 2.8em; margin-bottom: 6px;
+    font-size: 1rem; font-weight: 700; line-height: 1.4;
+    min-height: 2.8em; margin-bottom: 10px; color: #1B1F27;
 }
-.rec-price {font-size: 1.35rem; font-weight: 700; margin-bottom: 14px;}
-.rec-specs {
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 10px 12px; margin-bottom: 14px;
+.rec-price {
+    font-size: 1.6rem; font-weight: 800; margin-bottom: 4px;
+    background: linear-gradient(90deg, #0F62FE, #8B5CF6);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    width: fit-content;
 }
-.rec-specs div {font-size: .92rem; font-weight: 500;}
-.rec-specs span {
-    display: block; font-size: .68rem; text-transform: uppercase;
-    letter-spacing: .05em; opacity: .6; font-weight: 400;
+.rec-save {font-size: .78rem; color: #5B6475; margin-bottom: 18px;}
+.rec-specs {display: grid; grid-template-columns: 1fr 1fr; gap: 10px;}
+.spec {
+    display: flex; align-items: center; gap: 10px;
+    background: #F4F7FF; border-radius: 14px; padding: 10px 12px;
+    transition: background .2s ease, transform .2s ease;
 }
-.rec-score {
-    border-top: 1px solid rgba(128,128,128,.25); padding-top: 10px;
-    font-size: .85rem; display: flex; justify-content: space-between;
+.spec:hover {background: #E8EFFF; transform: scale(1.03);}
+.spec svg {width: 20px; height: 20px; flex: none; color: #0F62FE;}
+.spec small {
+    display: block; font-size: .6rem; letter-spacing: .07em;
+    text-transform: uppercase; color: #7A8396; font-weight: 600;
 }
-.section-note {opacity: .75; font-size: .92rem; margin-bottom: .6rem;}
+.spec b {font-size: .88rem; color: #1B1F27; font-weight: 700;}
+.score-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: .8rem; color: #5B6475; margin: 18px 0 7px;
+}
+.score-row b {color: #1B1F27; font-size: .95rem; font-weight: 800;}
+.bar {height: 9px; background: #E7ECF8; border-radius: 999px; overflow: hidden;}
+.bar > i {
+    display: block; height: 100%; width: var(--w); border-radius: 999px;
+    background: linear-gradient(90deg, #60A5FA, #0F62FE, #8B5CF6);
+    animation: grow 1.2s cubic-bezier(.2,.8,.2,1) both; animation-delay: .35s;
+}
+
+/* ---------- Keadaan kosong ---------- */
+.empty {
+    text-align: center; padding: 44px 24px; margin-top: 12px;
+    border: 1.6px dashed #BFD0F5; border-radius: 20px; background: #fff;
+    color: #44506A; line-height: 1.6; animation: fadeUp .5s ease both;
+}
+.empty b {display: block; font-size: 1.15rem; margin-bottom: 6px; color: #1B1F27;}
+
+/* ---------- Komponen lain ---------- */
+div[data-testid="stDataFrame"], div[data-testid="stDataEditor"] {
+    border: 1px solid #E1E7F3; border-radius: 16px; overflow: hidden;
+    box-shadow: 0 10px 22px -18px rgba(20,40,90,.4);
+}
+div[data-testid="stExpander"] {
+    border: 1px solid #E1E7F3 !important; border-radius: 16px !important; background: #fff;
+}
+div[data-testid="stAlert"] {border-radius: 14px;}
+.stDownloadButton button {
+    border-radius: 12px; border: 1px solid #CFE0FF; background: #fff; font-weight: 600;
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.stDownloadButton button:hover {
+    transform: translateY(-2px); border-color: #0F62FE;
+    box-shadow: 0 12px 20px -12px rgba(15,98,254,.6);
+}
+.footer-note {
+    margin-top: 34px; padding-top: 16px; border-top: 1px solid #E1E7F3;
+    font-size: .8rem; color: #7A8396; text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {animation: none !important; transition: none !important;}
+    .bar > i {width: var(--w);}
+}
 </style>
-""",
+"""
+st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+
+# ---------------------------------------------------------------------------
+# Hero
+# ---------------------------------------------------------------------------
+st.markdown(
+    """<div class="hero">
+<div class="hero-eyebrow">Sistem Pendukung Keputusan</div>
+<div class="hero-title">Temukan laptop pemrograman terbaik sesuai anggaran Anda</div>
+<div class="hero-sub">Masukkan batas anggaran, lalu sistem menyaring dan mengurutkan laptop menggunakan pembobotan AHP dan perangkingan TOPSIS.</div>
+<div class="hero-chips"><span class="chip">Metode AHP</span><span class="chip">Metode TOPSIS</span><span class="chip">5 kriteria</span><span class="chip">Data Kaggle</span></div>
+</div>""",
     unsafe_allow_html=True,
 )
 
@@ -106,6 +340,33 @@ DEFAULT_PAIRWISE = np.array([
 
 RI_TABLE = {1: 0.00, 2: 0.00, 3: 0.58, 4: 0.90, 5: 1.12,
             6: 1.24, 7: 1.32, 8: 1.41, 9: 1.45, 10: 1.49}
+
+# Ikon SVG untuk kartu spesifikasi
+SVG_OPEN = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '
+            'stroke-linecap="round" stroke-linejoin="round">')
+ICON_CPU = (SVG_OPEN + '<rect x="6" y="6" width="12" height="12" rx="2"/>'
+            '<rect x="9.5" y="9.5" width="5" height="5"/>'
+            '<path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>')
+ICON_RAM = (SVG_OPEN + '<rect x="2" y="7" width="20" height="9" rx="1.5"/>'
+            '<path d="M6 16v3M10 16v3M14 16v3M18 16v3M6 10.5h2M11 10.5h2M16 10.5h2"/></svg>')
+ICON_DISK = (SVG_OPEN + '<rect x="3" y="6" width="18" height="12" rx="2.5"/>'
+             '<circle cx="17" cy="12" r="1"/><path d="M7 12h6"/></svg>')
+ICON_SCREEN = (SVG_OPEN + '<rect x="3" y="4" width="18" height="12" rx="2"/>'
+               '<path d="M8 20h8M12 16v4"/></svg>')
+
+
+# ---------------------------------------------------------------------------
+# Pembantu kompatibilitas versi Streamlit (lebar penuh)
+# ---------------------------------------------------------------------------
+def stretch(func, *args, **kwargs):
+    """Memanggil komponen Streamlit dengan lebar penuh.
+
+    Versi baru memakai width="stretch", versi lama memakai use_container_width.
+    """
+    try:
+        return func(*args, width="stretch", **kwargs)
+    except Exception:
+        return func(*args, use_container_width=True, **kwargs)
 
 
 # ---------------------------------------------------------------------------
@@ -285,6 +546,10 @@ def format_storage(gb):
     return f"{gb:g} GB"
 
 
+def section_title(text):
+    st.markdown(f'<div class="sec-title">{html.escape(text)}</div>', unsafe_allow_html=True)
+
+
 def parse_budget(text):
     """Membaca anggaran dari teks bebas.
 
@@ -319,24 +584,34 @@ def parse_budget(text):
     return int(round(value)) if value > 0 else None
 
 
-def recommendation_cards(rows):
+def recommendation_cards(rows, budget):
     cards = []
     for i, (_, r) in enumerate(rows.iterrows(), start=1):
         tag = "Rekomendasi utama" if i == 1 else f"Peringkat {i}"
         top_class = " top" if i == 1 else ""
+        delay = (i - 1) * 0.14
+        score_pct = max(0.0, min(1.0, float(r["preference_score"]))) * 100
+        remaining = budget - r["price_idr"]
+        if remaining <= 0:
+            save_text = "Tepat sesuai anggaran"
+        else:
+            save_text = f"Hemat {format_rupiah(remaining)} dari anggaran"
+
         cards.append(
-            f'<div class="rec-card{top_class}">'
+            f'<div class="rec-card{top_class}" style="animation-delay:{delay:.2f}s">'
+            f'<div class="rec-rank">{i}</div>'
             f'<div class="rec-tag">{tag}</div>'
             f'<div class="rec-model">{html.escape(str(r["model"]))}</div>'
             f'<div class="rec-price">{format_rupiah(r["price_idr"])}</div>'
+            f'<div class="rec-save">{save_text}</div>'
             f'<div class="rec-specs">'
-            f'<div><span>CPU</span>{int(r["cpu_cores"])} core</div>'
-            f'<div><span>RAM</span>{r["ram_gb"]:g} GB</div>'
-            f'<div><span>Storage</span>{format_storage(r["storage_gb"])}</div>'
-            f'<div><span>Resolusi</span>{r["resolution_px"] / 1e6:.2f} MP</div>'
+            f'<div class="spec">{ICON_CPU}<div><small>CPU</small><b>{int(r["cpu_cores"])} core</b></div></div>'
+            f'<div class="spec">{ICON_RAM}<div><small>RAM</small><b>{r["ram_gb"]:g} GB</b></div></div>'
+            f'<div class="spec">{ICON_DISK}<div><small>Storage</small><b>{format_storage(r["storage_gb"])}</b></div></div>'
+            f'<div class="spec">{ICON_SCREEN}<div><small>Resolusi</small><b>{r["resolution_px"] / 1e6:.2f} MP</b></div></div>'
             f'</div>'
-            f'<div class="rec-score"><span>Skor TOPSIS</span>'
-            f'<strong>{r["preference_score"]:.4f}</strong></div>'
+            f'<div class="score-row"><span>Skor TOPSIS</span><b>{r["preference_score"]:.4f}</b></div>'
+            f'<div class="bar"><i style="--w:{score_pct:.1f}%"></i></div>'
             f'</div>'
         )
     return cards
@@ -358,10 +633,10 @@ def ranking_table(data, top_n):
 
 
 def show_table(table):
-    st.dataframe(
+    stretch(
+        st.dataframe,
         table,
         hide_index=True,
-        use_container_width=True,
         column_config={
             "No": st.column_config.NumberColumn(width="small"),
             "RAM (GB)": st.column_config.NumberColumn(format="%d"),
@@ -374,25 +649,41 @@ def show_table(table):
     )
 
 
+def style_chart(chart):
+    return (
+        chart.configure_view(stroke=None)
+        .configure_axis(
+            gridColor="#EDF1FA", domainColor="#D5DCEB", tickColor="#D5DCEB",
+            labelColor="#44506A", titleColor="#44506A", labelFontSize=12,
+        )
+        .configure(background="transparent")
+    )
+
+
 def score_chart(data, top_n):
     top = data.head(top_n).copy()
     top["harga"] = top["price_idr"].apply(format_rupiah)
     chart = (
         alt.Chart(top)
-        .mark_bar()
+        .mark_bar(cornerRadiusEnd=7, size=18)
         .encode(
             x=alt.X("preference_score:Q", title="Skor TOPSIS"),
             y=alt.Y("model:N", sort="-x", title=None,
                     axis=alt.Axis(labelLimit=340)),
+            color=alt.Color(
+                "preference_score:Q",
+                scale=alt.Scale(range=["#93C5FD", "#0F62FE"]),
+                legend=None,
+            ),
             tooltip=[
                 alt.Tooltip("model:N", title="Model"),
                 alt.Tooltip("harga:N", title="Harga"),
                 alt.Tooltip("preference_score:Q", title="Skor", format=".4f"),
             ],
         )
-        .properties(height=max(120, 30 * len(top) + 40))
+        .properties(height=max(120, 32 * len(top) + 40))
     )
-    st.altair_chart(chart, use_container_width=True)
+    stretch(st.altair_chart, style_chart(chart))
 
 
 def to_csv_bytes(df):
@@ -424,17 +715,6 @@ with st.sidebar:
         value="Wise - https://wise.com/in/currency-converter/inr-to-idr-rate/history",
     )
     EXCHANGE_RATE_DATE = st.text_input("Tanggal kurs", value="2026-11-24")
-
-# ---------------------------------------------------------------------------
-# Header
-# ---------------------------------------------------------------------------
-st.title("Rekomendasi Laptop untuk Pemrograman")
-st.markdown(
-    '<div class="section-note">Masukkan anggaran Anda. Sistem akan memilih dan '
-    "mengurutkan laptop yang sesuai menggunakan metode AHP (pembobotan kriteria) "
-    "dan TOPSIS (perangkingan).</div>",
-    unsafe_allow_html=True,
-)
 
 # ---------------------------------------------------------------------------
 # Muat data
@@ -504,7 +784,7 @@ labels = [criteria_names[c] for c in criteria]
 n_crit = len(criteria)
 
 with tab_ahp:
-    st.subheader("Matriks perbandingan berpasangan")
+    section_title("Matriks perbandingan berpasangan")
     st.markdown(
         '<div class="section-note">Matriks ini bersifat sementara dan perlu disetujui tim. '
         "Isi hanya sel di atas diagonal (skala 1/9 sampai 9). Sel di bawah diagonal "
@@ -517,7 +797,8 @@ with tab_ahp:
         for j in range(i + 1, n_crit):
             upper[i, j] = DEFAULT_PAIRWISE[i, j]
 
-    edited = st.data_editor(
+    edited = stretch(
+        st.data_editor,
         pd.DataFrame(upper, index=labels, columns=labels),
         column_config={
             label: st.column_config.NumberColumn(
@@ -525,7 +806,6 @@ with tab_ahp:
             )
             for label in labels
         },
-        use_container_width=True,
         key="pairwise_editor",
     )
 
@@ -549,9 +829,9 @@ with tab_ahp:
         pairwise_matrix = DEFAULT_PAIRWISE.copy()
 
     st.markdown("**Matriks lengkap (setelah kebalikan dihitung)**")
-    st.dataframe(
+    stretch(
+        st.dataframe,
         pd.DataFrame(pairwise_matrix, index=labels, columns=labels).style.format("{:.4f}"),
-        use_container_width=True,
     )
 
     weights, lambda_max, CI, RI, CR = calculate_ahp(pairwise_matrix)
@@ -562,18 +842,18 @@ with tab_ahp:
         "Bobot": weights,
     })
 
-    st.subheader("Bobot kriteria")
+    section_title("Bobot kriteria")
     w1, w2 = st.columns(2)
     with w1:
-        st.dataframe(
+        stretch(
+            st.dataframe,
             weight_table.style.format({"Bobot": "{:.4f}"}),
             hide_index=True,
-            use_container_width=True,
         )
     with w2:
         weight_chart = (
             alt.Chart(weight_table)
-            .mark_bar()
+            .mark_bar(cornerRadiusEnd=7, size=20, color="#0F62FE")
             .encode(
                 x=alt.X("Bobot:Q", title="Bobot AHP"),
                 y=alt.Y("Kriteria:N", sort="-x", title=None),
@@ -581,9 +861,9 @@ with tab_ahp:
             )
             .properties(height=220)
         )
-        st.altair_chart(weight_chart, use_container_width=True)
+        stretch(st.altair_chart, style_chart(weight_chart))
 
-    st.subheader("Uji konsistensi")
+    section_title("Uji konsistensi")
     k1, k2, k3, k4 = st.columns(4)
     k1.metric("Lambda max", f"{lambda_max:.6f}")
     k2.metric("CI", f"{CI:.6f}")
@@ -599,7 +879,7 @@ ranking = calculate_topsis(df_clean, criteria, weights, criteria_types)
 
 # ======================= TAB REKOMENDASI =======================
 with tab_rec:
-    st.subheader("Cari laptop sesuai anggaran")
+    section_title("Cari laptop sesuai anggaran")
 
     with st.form("budget_form"):
         f1, f2 = st.columns([3, 1])
@@ -611,7 +891,7 @@ with tab_rec:
                  "10 juta, atau 7,5 juta.",
         )
         top_n = f2.selectbox("Jumlah rekomendasi", [5, 10, 15, 20, 30], index=1)
-        submitted = st.form_submit_button("Tampilkan Rekomendasi", type="primary")
+        st.form_submit_button("Tampilkan Rekomendasi", type="primary")
 
     budget = parse_budget(budget_text)
 
@@ -623,6 +903,7 @@ with tab_rec:
     else:
         budget_result = ranking[ranking["price_idr"] <= budget].copy().reset_index(drop=True)
 
+        st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
         m1, m2, m3 = st.columns(3)
         m1.metric("Anggaran", format_rupiah(budget))
         m2.metric("Laptop sesuai anggaran", f"{len(budget_result)} dari {len(ranking)}")
@@ -633,27 +914,29 @@ with tab_rec:
 
         if budget_result.empty:
             cheapest = int(ranking["price_idr"].min())
-            st.warning(
-                "Tidak ada laptop yang memenuhi anggaran ini. "
-                f"Harga laptop termurah pada data adalah {format_rupiah(cheapest)}."
+            st.markdown(
+                f'<div class="empty"><b>Belum ada laptop yang sesuai anggaran</b>'
+                f"Harga laptop termurah pada data adalah {format_rupiah(cheapest)}. "
+                f"Naikkan anggaran untuk melihat rekomendasi.</div>",
+                unsafe_allow_html=True,
             )
         else:
-            st.markdown("### Rekomendasi terbaik")
-            cards = recommendation_cards(budget_result.head(3))
+            section_title("Rekomendasi terbaik")
+            cards = recommendation_cards(budget_result.head(3), budget)
             card_cols = st.columns(3)
             for col, card in zip(card_cols, cards):
                 with col:
                     st.markdown(card, unsafe_allow_html=True)
 
             shown = min(top_n, len(budget_result))
-            st.markdown(f"### {shown} laptop teratas dalam anggaran")
-            table = ranking_table(budget_result, shown)
-            show_table(table)
+            section_title(f"{shown} laptop teratas dalam anggaran")
+            show_table(ranking_table(budget_result, shown))
 
-            st.markdown("### Perbandingan skor")
+            section_title("Perbandingan skor")
             score_chart(budget_result, shown)
 
-            st.download_button(
+            stretch(
+                st.download_button,
                 "Unduh hasil sesuai anggaran (CSV)",
                 data=to_csv_bytes(budget_result),
                 file_name="hasil_rekomendasi_sesuai_anggaran.csv",
@@ -671,7 +954,7 @@ with tab_rec:
 
 # ======================= TAB SELURUH RANKING =======================
 with tab_rank:
-    st.subheader("Peringkat TOPSIS seluruh alternatif")
+    section_title("Peringkat TOPSIS seluruh alternatif")
     st.caption(f"Jumlah alternatif yang dirangking: {len(ranking)}")
 
     rank_top_n = st.slider("Jumlah laptop yang ditampilkan", 5, len(ranking), min(20, len(ranking)))
@@ -688,6 +971,7 @@ with tab_data:
             "data dummy sebelum ada persetujuan atau arahan dosen."
         )
 
+    st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Data awal", len(df_raw))
     c2.metric("Data valid", len(df_clean))
@@ -699,36 +983,32 @@ with tab_data:
         f"SHA-256: `{source_sha256}`"
     )
 
-    st.subheader("Cuplikan data mentah")
-    st.dataframe(df_raw.head(), use_container_width=True)
+    section_title("Cuplikan data mentah")
+    stretch(st.dataframe, df_raw.head())
 
-    st.subheader("Audit awal")
+    section_title("Audit awal")
     a1, a2 = st.columns(2)
     with a1:
         st.markdown("**Nilai kosong per kolom (data mentah)**")
-        st.dataframe(
-            df_raw.isna().sum().to_frame("jumlah_kosong"), use_container_width=True
-        )
+        stretch(st.dataframe, df_raw.isna().sum().to_frame("jumlah_kosong"))
     with a2:
         st.markdown("**Nilai kosong setelah ekstraksi**")
-        st.dataframe(
-            df_extracted.isna().sum().to_frame("jumlah_kosong"), use_container_width=True
-        )
+        stretch(st.dataframe, df_extracted.isna().sum().to_frame("jumlah_kosong"))
     st.write("Jumlah baris duplikat identik:", int(df_raw.duplicated().sum()))
 
-    st.subheader("Data bersih dan konversi IDR")
+    section_title("Data bersih dan konversi IDR")
     st.caption(
         f"Kurs {INR_TO_IDR_RATE} | {EXCHANGE_RATE_SOURCE} | {EXCHANGE_RATE_DATE}"
     )
-    st.dataframe(df_clean.head(20), use_container_width=True)
+    stretch(st.dataframe, df_clean.head(20))
 
     if not df_excluded.empty:
         with st.expander(f"Baris yang tidak lolos ({len(df_excluded)})"):
-            st.dataframe(df_excluded, use_container_width=True)
+            stretch(st.dataframe, df_excluded)
 
 # ======================= TAB VALIDASI =======================
 with tab_valid:
-    st.subheader("Validasi hasil perhitungan")
+    section_title("Validasi hasil perhitungan")
     checks = [
         ("Jumlah bobot AHP sama dengan 1", bool(np.isclose(weights.sum(), 1.0))),
         ("Skor TOPSIS berada pada rentang 0 sampai 1",
@@ -737,13 +1017,13 @@ with tab_valid:
         ("Jumlah alternatif minimal 45", bool(len(ranking) >= 45)),
         ("Tidak ada nama model kosong", bool(ranking["model"].notna().all())),
     ]
-    st.dataframe(
+    stretch(
+        st.dataframe,
         pd.DataFrame({
             "Pemeriksaan": [c[0] for c in checks],
             "Hasil": ["Lolos" if c[1] else "Gagal" for c in checks],
         }),
         hide_index=True,
-        use_container_width=True,
     )
 
     v1, v2, v3 = st.columns(3)
@@ -753,7 +1033,7 @@ with tab_valid:
 
 # ======================= TAB UNDUH =======================
 with tab_export:
-    st.subheader("Unduh hasil")
+    section_title("Unduh hasil")
 
     metadata = pd.DataFrame([{
         "dataset_source": DATASET_URL,
@@ -779,10 +1059,20 @@ with tab_export:
     cols = st.columns(3)
     for idx, (fname, frame) in enumerate(downloads):
         with cols[idx % 3]:
-            st.download_button(
+            stretch(
+                st.download_button,
                 fname,
                 data=to_csv_bytes(frame),
                 file_name=fname,
                 mime="text/csv",
-                use_container_width=True,
             )
+
+# ---------------------------------------------------------------------------
+# Catatan kaki
+# ---------------------------------------------------------------------------
+st.markdown(
+    f'<div class="footer-note">Data: Kaggle ({html.escape(DATASET_HANDLE)}) | '
+    f"Kurs 1 INR = {INR_TO_IDR_RATE:g} IDR ({html.escape(EXCHANGE_RATE_DATE)}) | "
+    f"Metode: AHP dan TOPSIS</div>",
+    unsafe_allow_html=True,
+)
