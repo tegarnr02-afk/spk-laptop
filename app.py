@@ -90,6 +90,18 @@ def on_theme_change():
 IS_DARK = bool(st.session_state["theme_dark"])
 P = PALETTES["dark" if IS_DARK else "light"]
 
+
+def _is_mobile():
+    """Deteksi ponsel dari User-Agent, dipakai untuk menyesuaikan grafik."""
+    try:
+        agent = st.context.headers.get("User-Agent", "") or ""
+        return bool(re.search(r"Mobi|iPhone|iPod", agent, re.I))
+    except Exception:
+        return False
+
+
+IS_MOBILE = _is_mobile()
+
 # ---------------------------------------------------------------------------
 # Gaya visual dan animasi
 # ---------------------------------------------------------------------------
@@ -179,18 +191,57 @@ section[data-testid="stSidebar"] {
     background: linear-gradient(135deg, var(--accent), var(--accent2));
     animation: pulseGlow 2.6s ease-in-out infinite;
 }
+/* Saklar tema Light / Dark: bentuk oval, bulatan putih bergeser, label berubah sesuai mode */
 .st-key-theme_dark {display: flex; justify-content: flex-end;}
 .st-key-theme_dark label {
-    padding: .35rem 1rem .35rem .75rem; border-radius: 999px;
-    background: var(--surface); border: 1px solid var(--border);
-    box-shadow: 0 8px 18px -14px var(--shadow);
-    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+    padding: 0 !important; background: none !important; border: none !important;
+    box-shadow: none !important; min-height: 0 !important; cursor: pointer;
 }
-.st-key-theme_dark label:hover {
-    transform: translateY(-2px); border-color: var(--accent);
-    box-shadow: 0 14px 22px -14px var(--shadow-hover);
+.st-key-theme_dark label [data-testid="stWidgetLabel"] {display: none !important;}
+.st-key-theme_dark label > div:first-of-type {
+    position: relative !important; box-sizing: border-box !important;
+    width: 164px !important; height: 44px !important; margin: 0 !important; padding: 0 !important;
+    border-radius: 999px !important; overflow: hidden;
+    background: linear-gradient(90deg, #F0658F, #FFB04D) !important;
+    box-shadow: 0 12px 22px -12px rgba(240,101,143,.8) !important;
+    transition: background .45s ease, box-shadow .45s ease, transform .2s ease !important;
 }
-.st-key-theme_dark label p {color: var(--text) !important; font-weight: 600; font-size: .9rem;}
+.st-key-theme_dark label[data-selected="true"] > div:first-of-type {
+    background: linear-gradient(90deg, #1B2F75, #2B4CB8) !important;
+    box-shadow: 0 12px 22px -12px rgba(43,76,184,.85) !important;
+}
+.st-key-theme_dark label:hover > div:first-of-type {transform: translateY(-2px) !important;}
+.st-key-theme_dark label:has(input:focus-visible) > div:first-of-type {
+    outline: 2px solid var(--accent); outline-offset: 3px;
+}
+/* Tulisan mode lawan pada latar saklar (bulan saat terang, matahari saat gelap) */
+.st-key-theme_dark label > div:first-of-type::before {
+    content: "Dark"; position: absolute; top: 50%; right: 20px; transform: translateY(-50%);
+    padding-left: 21px; line-height: 16px; pointer-events: none;
+    font-size: .74rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #fff;
+    background: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z'/%3E%3C/svg%3E") no-repeat left center / 15px 15px;
+}
+.st-key-theme_dark label[data-selected="true"] > div:first-of-type::before {
+    content: "Light"; right: auto; left: 15px;
+    background: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='4' fill='white'/%3E%3Cpath d='M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4'/%3E%3C/svg%3E") no-repeat left center / 15px 15px;
+}
+/* Bulatan putih bertuliskan mode aktif */
+.st-key-theme_dark label > div:first-of-type > div {
+    position: absolute !important; top: 4px !important; left: 4px !important; right: auto !important;
+    width: 72px !important; height: 36px !important; margin: 0 !important;
+    border-radius: 999px !important; background: #fff !important; transform: none !important;
+    box-shadow: 0 6px 14px -6px rgba(0,0,0,.45) !important;
+    display: flex !important; align-items: center; justify-content: center;
+    transition: left .4s cubic-bezier(.3,.9,.3,1) !important;
+}
+.st-key-theme_dark label[data-selected="true"] > div:first-of-type > div {left: calc(100% - 76px) !important;}
+.st-key-theme_dark label > div:first-of-type > div::after {
+    content: "Light"; font-size: .76rem; font-weight: 800; letter-spacing: .1em;
+    text-transform: uppercase; color: #E5487E;
+}
+.st-key-theme_dark label[data-selected="true"] > div:first-of-type > div::after {
+    content: "Dark"; color: #1B2F75;
+}
 
 /* ---------- Hero ---------- */
 .hero {
@@ -482,6 +533,61 @@ div[data-testid="stExpander"] summary p, div[data-testid="stExpander"] summary s
     font-size: .8rem; color: var(--faint); text-align: center;
 }
 
+/* ---------- Responsif: tablet ---------- */
+@media (max-width: 900px) {
+    .block-container {padding-left: 1.4rem !important; padding-right: 1.4rem !important;}
+    .hero {padding: 32px 30px;}
+    .hero .hero-title {font-size: 2rem;}
+}
+
+/* ---------- Responsif: ponsel ---------- */
+@media (max-width: 640px) {
+    .block-container {padding: 4.2rem .9rem 2.5rem .9rem !important;}
+
+    /* bilah atas tetap satu baris: nama di kiri, saklar di kanan */
+    .st-key-topbar [data-testid="stHorizontalBlock"] {
+        flex-direction: row !important; flex-wrap: nowrap !important;
+        align-items: center !important; gap: .5rem !important;
+    }
+    .st-key-topbar [data-testid="stColumn"], .st-key-topbar [data-testid="column"] {
+        min-width: 0 !important; width: auto !important;
+    }
+    .st-key-topbar [data-testid="stColumn"]:first-child,
+    .st-key-topbar [data-testid="column"]:first-child {flex: 1 1 auto !important;}
+    .st-key-topbar [data-testid="stColumn"]:last-child,
+    .st-key-topbar [data-testid="column"]:last-child {flex: 0 0 auto !important;}
+    .brand {font-size: .85rem; padding: 6px 0;}
+
+    .hero {padding: 26px 22px; border-radius: 22px; margin-bottom: 18px;}
+    .hero .hero-title {font-size: 1.55rem; line-height: 1.22; margin: 12px 0 10px;}
+    .hero .hero-sub {font-size: .92rem; line-height: 1.55;}
+    .hero .hero-chips {gap: 8px; margin-top: 16px;}
+    .hero .chip {padding: 5px 12px; font-size: .74rem;}
+    .hero .hero-eyebrow {font-size: .64rem; padding: 5px 12px;}
+
+    /* tab dalam satu baris yang bisa digeser */
+    [data-testid="stTabs"] [role="tablist"] {
+        flex-wrap: nowrap !important; overflow-x: auto !important;
+        scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    }
+    [data-testid="stTabs"] [role="tablist"]::-webkit-scrollbar {display: none;}
+    [data-testid="stTab"] {flex: none !important; white-space: nowrap; padding: 8px 16px !important;}
+    [data-testid="stTab"] p {font-size: .82rem;}
+
+    .sec-title {font-size: 1.05rem; margin: 22px 0 12px;}
+    div[data-testid="stForm"] {padding: 18px 16px 10px 16px; border-radius: 20px;}
+    div[data-testid="stFormSubmitButton"] button {width: 100% !important;}
+    div[data-testid="stMetric"] {padding: 12px 16px; border-radius: 16px;}
+
+    .rec-card {min-height: 0; padding: 20px 18px 16px 18px; border-radius: 22px;}
+    .rec-card:hover {transform: none;}
+    .rec-model {min-height: 0;}
+    .rec-price {font-size: 1.45rem;}
+    .rec-rank {font-size: 4.4rem;}
+    .empty {padding: 30px 18px;}
+    .footer-note {font-size: .72rem;}
+}
+
 @media (prefers-reduced-motion: reduce) {
     * {animation: none !important; transition: none !important;}
     .bar > i {width: var(--w);}
@@ -494,20 +600,26 @@ st.markdown(THEME_VARS + STATIC_CSS, unsafe_allow_html=True)
 # Bilah atas (nama aplikasi dan tombol tema)
 # ---------------------------------------------------------------------------
 try:
-    top_left, top_right = st.columns([4, 1], vertical_alignment="center")
+    topbar = st.container(key="topbar")
 except TypeError:
-    top_left, top_right = st.columns([4, 1])
+    topbar = st.container()
 
-with top_left:
-    st.markdown(
-        '<div class="brand"><span class="brand-dot"></span>SPK Laptop Pemrograman</div>',
-        unsafe_allow_html=True,
-    )
-with top_right:
+with topbar:
     try:
-        st.toggle("Mode gelap", key="theme_dark", on_change=on_theme_change)
-    except AttributeError:
-        st.checkbox("Mode gelap", key="theme_dark", on_change=on_theme_change)
+        top_left, top_right = st.columns([4, 1], vertical_alignment="center")
+    except TypeError:
+        top_left, top_right = st.columns([4, 1])
+
+    with top_left:
+        st.markdown(
+            '<div class="brand"><span class="brand-dot"></span>SPK Laptop Pemrograman</div>',
+            unsafe_allow_html=True,
+        )
+    with top_right:
+        try:
+            st.toggle("Mode gelap", key="theme_dark", on_change=on_theme_change)
+        except AttributeError:
+            st.checkbox("Mode gelap", key="theme_dark", on_change=on_theme_change)
 
 # ---------------------------------------------------------------------------
 # Hero
@@ -874,11 +986,13 @@ def show_table(table):
 
 def axis_style(**extra):
     """Gaya sumbu grafik yang mengikuti tema (dipasang langsung pada tiap sumbu)."""
-    return alt.Axis(
+    options = dict(
         gridColor=P["chart_grid"], domainColor=P["chart_domain"],
         tickColor=P["chart_domain"], labelColor=P["chart_label"],
-        titleColor=P["chart_label"], labelFontSize=12, **extra,
+        titleColor=P["chart_label"], labelFontSize=12,
     )
+    options.update(extra)
+    return alt.Axis(**options)
 
 
 def style_chart(chart):
@@ -900,9 +1014,11 @@ def score_chart(data, top_n):
         alt.Chart(top)
         .mark_bar(cornerRadiusEnd=7, size=18)
         .encode(
-            x=alt.X("preference_score:Q", title="Skor TOPSIS", axis=axis_style()),
+            x=alt.X("preference_score:Q", title="Skor TOPSIS",
+                    axis=axis_style(tickCount=4 if IS_MOBILE else 8, format=".2f")),
             y=alt.Y("model:N", sort="-x", title=None,
-                    axis=axis_style(labelLimit=340)),
+                    axis=axis_style(labelLimit=110 if IS_MOBILE else 340,
+                                    labelFontSize=11 if IS_MOBILE else 12)),
             color=alt.Color(
                 "preference_score:Q",
                 scale=alt.Scale(range=P["chart_range"]),
@@ -914,7 +1030,7 @@ def score_chart(data, top_n):
                 alt.Tooltip("preference_score:Q", title="Skor", format=".4f"),
             ],
         )
-        .properties(height=max(120, 32 * len(top) + 40))
+        .properties(height=max(120, (28 if IS_MOBILE else 32) * len(top) + 40))
     )
     stretch(st.altair_chart, style_chart(chart))
 
