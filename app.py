@@ -75,20 +75,19 @@ def _initial_theme():
         return "light"
 
 
-if "theme" not in st.session_state:
-    st.session_state["theme"] = _initial_theme()
+if "theme_dark" not in st.session_state:
+    st.session_state["theme_dark"] = _initial_theme() == "dark"
 
 
-def toggle_theme():
-    new_theme = "dark" if st.session_state["theme"] == "light" else "light"
-    st.session_state["theme"] = new_theme
+def on_theme_change():
+    """Menyimpan pilihan tema pada alamat halaman agar bertahan saat dimuat ulang."""
     try:
-        st.query_params["tema"] = "gelap" if new_theme == "dark" else "terang"
+        st.query_params["tema"] = "gelap" if st.session_state["theme_dark"] else "terang"
     except Exception:
         pass
 
 
-IS_DARK = st.session_state["theme"] == "dark"
+IS_DARK = bool(st.session_state["theme_dark"])
 P = PALETTES["dark" if IS_DARK else "light"]
 
 # ---------------------------------------------------------------------------
@@ -129,7 +128,7 @@ html, body, .stApp, .stApp div, .stApp p, .stApp label, .stApp li, .stApp button
     color: var(--text);
     transition: background-color .4s ease, color .4s ease;
 }
-.block-container {padding-top: 1.4rem; max-width: 1200px;}
+.block-container {padding-top: 4.4rem; max-width: 1200px;}
 footer {visibility: hidden;}
 header[data-testid="stHeader"] {background: transparent;}
 .stApp, .stApp p, .stApp label, .stApp li, .stApp h1, .stApp h2, .stApp h3, .stApp h4,
@@ -180,19 +179,18 @@ section[data-testid="stSidebar"] {
     background: linear-gradient(135deg, var(--accent), var(--accent2));
     animation: pulseGlow 2.6s ease-in-out infinite;
 }
-.st-key-theme_toggle {display: flex; justify-content: flex-end;}
-.st-key-theme_toggle button {
-    border-radius: 999px !important; padding: .45rem 1.25rem !important;
-    background: var(--surface) !important; border: 1px solid var(--border) !important;
-    font-weight: 600 !important; box-shadow: 0 8px 18px -14px var(--shadow);
-    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease !important;
+.st-key-theme_dark {display: flex; justify-content: flex-end;}
+.st-key-theme_dark label {
+    padding: .35rem 1rem .35rem .75rem; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--border);
+    box-shadow: 0 8px 18px -14px var(--shadow);
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
 }
-.st-key-theme_toggle button p, .st-key-theme_toggle button span {color: var(--text) !important;}
-.st-key-theme_toggle button:hover {
-    transform: translateY(-2px); border-color: var(--accent) !important;
+.st-key-theme_dark label:hover {
+    transform: translateY(-2px); border-color: var(--accent);
     box-shadow: 0 14px 22px -14px var(--shadow-hover);
 }
-.st-key-theme_toggle button [data-testid="stIconMaterial"] {color: var(--accent) !important;}
+.st-key-theme_dark label p {color: var(--text) !important; font-weight: 600; font-size: .9rem;}
 
 /* ---------- Hero ---------- */
 .hero {
@@ -275,28 +273,49 @@ div[data-testid="stForm"] {
     box-shadow: 0 14px 30px -20px var(--shadow);
     animation: fadeUp .6s ease both;
 }
-div[data-baseweb="input"], div[data-baseweb="base-input"], div[data-baseweb="select"] > div {
-    background: var(--input-bg) !important; border-color: var(--border) !important;
+/* Kotak input teks, angka, dan pilihan: dukung struktur lama (baseweb) dan baru (react-aria) */
+div[data-baseweb="input"], div[data-baseweb="base-input"], div[data-baseweb="select"] > div,
+[data-testid="stTextInputRootElement"], [data-testid="stNumberInputContainer"],
+[data-testid="stSelectbox"] [role="group"], [data-testid="stTextAreaRootElement"] {
+    background: var(--input-bg) !important; border: 1px solid var(--border) !important;
     color: var(--text) !important; border-radius: 14px !important;
+    transition: border-color .2s ease, box-shadow .2s ease, background .3s ease;
+}
+div[data-baseweb="input"]:focus-within, div[data-baseweb="base-input"]:focus-within,
+[data-testid="stTextInputRootElement"]:focus-within, [data-testid="stNumberInputContainer"]:focus-within,
+[data-testid="stSelectbox"] [role="group"]:focus-within, [data-testid="stTextAreaRootElement"]:focus-within {
+    border-color: var(--accent) !important; box-shadow: 0 0 0 3px var(--soft);
 }
 .stApp input, .stApp textarea {
     color: var(--text) !important; -webkit-text-fill-color: var(--text);
     background: transparent !important;
 }
-.stApp input::placeholder {color: var(--faint) !important; -webkit-text-fill-color: var(--faint);}
+.stApp input::placeholder, .stApp textarea::placeholder {
+    color: var(--faint) !important; -webkit-text-fill-color: var(--faint);
+}
+[data-testid="stNumberInputStepDown"], [data-testid="stNumberInputStepUp"],
 [data-testid="stNumberInput"] button {
-    background: var(--input-bg) !important; color: var(--text) !important;
+    background: var(--surface) !important; color: var(--text) !important;
     border-color: var(--border) !important;
 }
-div[data-baseweb="select"] svg {color: var(--muted) !important; fill: var(--muted) !important;}
+[data-testid="stNumberInputStepDown"] svg, [data-testid="stNumberInputStepUp"] svg {
+    color: var(--text) !important; fill: var(--text) !important;
+}
+[data-testid="stSelectbox"] svg, div[data-baseweb="select"] svg {
+    color: var(--muted) !important; fill: var(--muted) !important;
+}
 div[data-baseweb="select"] span, div[data-baseweb="select"] div {color: var(--text);}
-div[data-baseweb="popover"] > div, div[data-baseweb="popover"] ul,
-div[data-baseweb="menu"], [data-testid="stSelectboxVirtualDropdown"] {
+/* Daftar pilihan (dropdown) */
+div[data-baseweb="popover"] > div, div[data-baseweb="popover"] ul, div[data-baseweb="menu"],
+[data-testid="stSelectboxVirtualDropdown"], [role="listbox"] {
     background: var(--surface) !important; color: var(--text) !important;
     border: 1px solid var(--border); border-radius: 14px !important;
 }
-li[role="option"], li[role="option"] div {color: var(--text) !important;}
-li[role="option"]:hover, li[role="option"][aria-selected="true"] {background: var(--soft) !important;}
+[role="option"], [role="option"] div, li[role="option"] {color: var(--text) !important;}
+[role="option"] {border-radius: 10px !important;}
+[role="option"]:hover, [role="option"][aria-selected="true"], [role="option"][data-focused="true"] {
+    background: var(--soft) !important;
+}
 div[data-testid="stFormSubmitButton"] button {
     background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent)) !important;
     background-size: 200% 100% !important;
@@ -338,7 +357,10 @@ div[data-testid="stMetric"]:hover {
     font-size: .74rem !important; letter-spacing: .06em; text-transform: uppercase;
     color: var(--faint) !important; font-weight: 700 !important;
 }
-[data-testid="stMetricValue"] {font-weight: 800 !important;}
+[data-testid="stMetricValue"], [data-testid="stMetricValue"] div {
+    font-weight: 800 !important; font-size: clamp(1.3rem, 2.1vw, 2rem) !important;
+    white-space: normal !important; overflow: visible !important; text-overflow: clip !important;
+}
 
 /* ---------- Kartu rekomendasi ---------- */
 .rec-card {
@@ -482,12 +504,10 @@ with top_left:
         unsafe_allow_html=True,
     )
 with top_right:
-    theme_label = "Mode terang" if IS_DARK else "Mode gelap"
-    theme_icon = ":material/light_mode:" if IS_DARK else ":material/dark_mode:"
     try:
-        st.button(theme_label, key="theme_toggle", on_click=toggle_theme, icon=theme_icon)
-    except TypeError:
-        st.button(theme_label, key="theme_toggle", on_click=toggle_theme)
+        st.toggle("Mode gelap", key="theme_dark", on_change=on_theme_change)
+    except AttributeError:
+        st.checkbox("Mode gelap", key="theme_dark", on_change=on_theme_change)
 
 # ---------------------------------------------------------------------------
 # Hero
@@ -852,6 +872,15 @@ def show_table(table):
     )
 
 
+def axis_style(**extra):
+    """Gaya sumbu grafik yang mengikuti tema (dipasang langsung pada tiap sumbu)."""
+    return alt.Axis(
+        gridColor=P["chart_grid"], domainColor=P["chart_domain"],
+        tickColor=P["chart_domain"], labelColor=P["chart_label"],
+        titleColor=P["chart_label"], labelFontSize=12, **extra,
+    )
+
+
 def style_chart(chart):
     return (
         chart.configure_view(stroke=None)
@@ -871,9 +900,9 @@ def score_chart(data, top_n):
         alt.Chart(top)
         .mark_bar(cornerRadiusEnd=7, size=18)
         .encode(
-            x=alt.X("preference_score:Q", title="Skor TOPSIS"),
+            x=alt.X("preference_score:Q", title="Skor TOPSIS", axis=axis_style()),
             y=alt.Y("model:N", sort="-x", title=None,
-                    axis=alt.Axis(labelLimit=340)),
+                    axis=axis_style(labelLimit=340)),
             color=alt.Color(
                 "preference_score:Q",
                 scale=alt.Scale(range=P["chart_range"]),
@@ -1062,8 +1091,8 @@ with tab_ahp:
             alt.Chart(weight_table)
             .mark_bar(cornerRadiusEnd=7, size=20, color=P["chart_solid"])
             .encode(
-                x=alt.X("Bobot:Q", title="Bobot AHP"),
-                y=alt.Y("Kriteria:N", sort="-x", title=None),
+                x=alt.X("Bobot:Q", title="Bobot AHP", axis=axis_style()),
+                y=alt.Y("Kriteria:N", sort="-x", title=None, axis=axis_style()),
                 tooltip=["Kriteria", alt.Tooltip("Bobot:Q", format=".4f")],
             )
             .properties(height=220)
