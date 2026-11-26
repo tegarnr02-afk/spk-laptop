@@ -576,7 +576,7 @@ div[data-testid="stExpander"] summary p, div[data-testid="stExpander"] summary s
 
     .sec-title {font-size: 1.05rem; margin: 22px 0 12px;}
     div[data-testid="stForm"] {padding: 18px 16px 10px 16px; border-radius: 20px;}
-    div[data-testid="stFormSubmitButton"] button {width: 100% !important;}
+    div[data-testid="stFormSubmitButton"], div[data-testid="stFormSubmitButton"] button {width: 100% !important;}
     div[data-testid="stMetric"] {padding: 12px 16px; border-radius: 16px;}
 
     .rec-card {min-height: 0; padding: 20px 18px 16px 18px; border-radius: 22px;}
@@ -788,10 +788,21 @@ def load_from_kaggle():
     return pd.read_csv(raw_file), sha, raw_file.name
 
 
+CSV_ENCODINGS = ["utf-8-sig", "utf-8", "cp1252", "latin-1"]
+
+
 @st.cache_data
 def load_from_upload(file_bytes: bytes, name: str):
+    """Membaca CSV unggahan. Mencoba beberapa encoding karena banyak CSV Kaggle
+    tidak berformat UTF-8 (misalnya Latin-1 atau Windows-1252)."""
     sha = hashlib.sha256(file_bytes).hexdigest()
-    return pd.read_csv(io.BytesIO(file_bytes)), sha, name
+    last_error = None
+    for encoding in CSV_ENCODINGS:
+        try:
+            return pd.read_csv(io.BytesIO(file_bytes), encoding=encoding), sha, name
+        except UnicodeDecodeError as exc:
+            last_error = exc
+    raise last_error
 
 
 @st.cache_data
@@ -1088,7 +1099,13 @@ else:
 required_columns = ["Model", "Price", "Core", "Ram", "SSD", "Display"]
 missing_columns = [c for c in required_columns if c not in df_raw.columns]
 if missing_columns:
-    notice("error", f"Kolom wajib tidak ditemukan: {missing_columns}")
+    notice(
+        "error",
+        f"Kolom wajib tidak ditemukan: {missing_columns}. "
+        f"Kolom pada file Anda: {list(df_raw.columns)}. "
+        "Aplikasi ini membaca format dataset Kaggle sumanbera19/laptop-price-dataset "
+        "(kolom Model, Price, Core, Ram, SSD, dan Display).",
+    )
     st.stop()
 
 if INR_TO_IDR_RATE <= 0:
